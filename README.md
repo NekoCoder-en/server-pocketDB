@@ -1,6 +1,4 @@
 <div align="center">
-  <img src="./banner.png" alt="PocketDB Relay Server Banner" width="100%" />
-  <br /><br />
   <img src="https://upload.wikimedia.org/wikipedia/commons/d/d9/Node.js_logo.svg" width="120" alt="Node.js Logo"/>
   <h1>☁️ PocketDB Relay Server</h1>
   <p><strong>El puente inteligente entre tus aplicaciones y tus bases de datos móviles.</strong></p>
@@ -37,11 +35,11 @@ Simplemente vincula tu repositorio de GitHub a un "Web Service" en Render. El `p
 Hemos incluido una herramienta de línea de comandos (CLI) que simula la experiencia de estar conectado a un servidor MariaDB o MySQL tradicional. Traduce inteligentemente comandos comunes hacia SQLite y te permite administrar tus bases de datos desde tu PC.
 
 **Uso:**
-Abre tu terminal y ejecuta el script pasando el ID que aparece en la pantalla de tu app móvil, junto con la URL de tu Relay Server:
+Abre tu terminal y ejecuta el script pasando el ID de tu dispositivo, la API Key generada (que verás en la app móvil) y la URL de tu Relay Server:
 
 ```bash
 # Ejemplo:
-node cli.js 3C9DT6 https://pocketdb-relay.onrender.com
+node cli.js 3C9DT6 TU_API_KEY_SECRETA https://pocketdb-relay.onrender.com
 ```
 
 **Comandos soportados en la Consola:**
@@ -68,19 +66,26 @@ Si estás construyendo una aplicación real (ej. un backend en NestJS o un front
 ```javascript
 async function guardarUsuario() {
   const DEVICE_ID = '3C9DT6';
+  const API_KEY = 'TU_API_KEY_AQUI'; // Copiada de la app móvil
   const RELAY_URL = 'https://pocketdb-relay.onrender.com';
 
   // 1. Primero seleccionamos la base de datos que queremos usar
   await fetch(`${RELAY_URL}/api/query/${DEVICE_ID}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY 
+    },
     body: JSON.stringify({ sql: 'USE ecommerce;' })
   });
 
   // 2. Ejecutamos nuestra consulta real
   const response = await fetch(`${RELAY_URL}/api/query/${DEVICE_ID}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY 
+    },
     body: JSON.stringify({ 
       sql: "INSERT INTO usuarios (nombre, edad) VALUES ('Ana', 28);" 
     })

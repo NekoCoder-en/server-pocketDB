@@ -4,12 +4,13 @@ const readline = require('readline');
 process.removeAllListeners('warning');
 
 const DEVICE_ID = process.argv[2];
-const RELAY_URL = process.argv[3] || 'http://localhost:3001';
+const API_KEY = process.argv[3];
+const RELAY_URL = process.argv[4] || 'http://localhost:3001';
 
-if (!DEVICE_ID) {
+if (!DEVICE_ID || !API_KEY) {
   console.error("❌ Error: Faltan credenciales de conexión.");
-  console.log("Uso: node cli.js <DEVICE_ID> [RELAY_URL]");
-  console.log("Ejemplo: node cli.js 3A5F9B https://tu-relay.fly.dev");
+  console.log("Uso: node cli.js <DEVICE_ID> <API_KEY> [RELAY_URL]");
+  console.log("Ejemplo: node cli.js 3A5F9B mi_secreto https://tu-relay.fly.dev");
   process.exit(1);
 }
 
@@ -54,7 +55,10 @@ rl.on('line', async (line) => {
   try {
     const response = await fetch(`${cleanUrl}/api/query/${DEVICE_ID}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY 
+      },
       body: JSON.stringify({ sql })
     });
 

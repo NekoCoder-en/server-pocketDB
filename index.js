@@ -103,7 +103,11 @@ app.get('/', (req, res) => {
     <p>PocketDB Relay Server proporciona una API HTTP RESTful moderna que te permite interactuar de forma remota y segura con la base de datos SQLite alojada en tu dispositivo móvil. Todas las peticiones HTTP se transforman en mensajes WebSocket de baja latencia bajo el capó.</p>
 
     <h2 id="auth">Autenticación y Conexión</h2>
-    <p>La API no utiliza sistemas de tokens complejos. Utiliza el identificador <code>deviceId</code> único (6 caracteres) que aparece en la pantalla principal de la aplicación móvil de PocketDB para enrutar las consultas al dispositivo exacto.</p>
+    <p>La API requiere dos componentes para conectarse de forma segura a tu base de datos:</p>
+    <ul>
+      <li><code style="color: var(--text-main);">deviceId</code>: El ID de 6 caracteres para enrutar tu petición. Se pasa en la URL.</li>
+      <li><code style="color: var(--text-main);">apiKey</code>: Contraseña de 16 caracteres generada por el celular. Debe enviarse como Header <code>x-api-key</code> o en el JSON.</li>
+    </ul>
 
     <h2 id="execute">Ejecutar Consulta (Query)</h2>
     <p>Envía cualquier sentencia SQL estándar (incluyendo <code>CREATE DATABASE</code>, <code>USE</code>, <code>SELECT</code>, <code>INSERT</code>) al dispositivo móvil enlazado.</p>
@@ -112,17 +116,15 @@ app.get('/', (req, res) => {
       <span class="method">POST</span> /api/query/:deviceId
     </div>
 
-    <h3>Parámetros de Ruta</h3>
+    <h3>Headers Requeridos</h3>
     <table>
       <tr>
-        <th>Parámetro</th>
-        <th>Tipo</th>
+        <th>Header</th>
         <th>Descripción</th>
       </tr>
       <tr>
-        <td><code>deviceId</code></td>
-        <td><code>string</code></td>
-        <td>El ID de 6 caracteres visible en la aplicación móvil.</td>
+        <td><code>x-api-key</code></td>
+        <td>Tu API Key secreta generada en la aplicación móvil.</td>
       </tr>
     </table>
 
@@ -149,12 +151,16 @@ app.get('/', (req, res) => {
     
     <pre><code>// 1. Configuración
 const DEVICE_ID = '3C9DT6'; // Tu ID de la app móvil
+const API_KEY = 'XXXXXXXXXXXXXXXX'; // Tu API Key secreta
 const RELAY_URL = 'https://pocketdb-otnm.onrender.com';
 
 async function ejecutarSQL(sql, args = []) {
   const res = await fetch(\`\${RELAY_URL}/api/query/\${DEVICE_ID}\`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY 
+    },
     body: JSON.stringify({ sql, args })
   });
   return await res.json();
@@ -202,11 +208,20 @@ const pendingQueries = new Map();
 io.on('connection', (socket) => {
   console.log(`[+] Nueva conexión WebSocket: ${socket.id}`);
 
-  // El teléfono se registra con su ID único
-  socket.on('register_device', (deviceId) => {
-    activeDevices.set(deviceId, socket);
+  // El teléfono se registra con su ID único y su API Key secreta
+  socket.on('register_device', (data) => {
+    let deviceId, apiKey;
+    if (typeof data === 'string') {
+      deviceId = data; // Compatibilidad con versiones antiguas
+      apiKey = null;
+    } else {
+      deviceId = data.deviceId;
+      apiKey = data.apiKey;
+    }
+
+    activeDevices.set(deviceId, { socket, apiKey });
     socket.deviceId = deviceId; // Guardamos la referencia en el socket
-    console.log(`[+] Dispositivo registrado: ${deviceId} en el socket ${socket.id}`);
+    console.log(`[+] Dispositivo registrado: ${deviceId} en el socket ${socket.id} (Key: ${apiKey ? 'SI' : 'NO'})`);
   });
 
   // El teléfono responde a una consulta SQL
@@ -239,16 +254,25 @@ io.on('connection', (socket) => {
 app.post('/api/query/:deviceId', async (req, res) => {
   const { deviceId } = req.params;
   const { sql, args } = req.body;
+  const clientApiKey = req.headers['x-api-key'] || req.body.apiKey; // Soportar Header o Body
 
   if (!activeDevices.has(deviceId)) {
     return res.status(404).json({ error: 'Dispositivo no encontrado o desconectado. Verifica que la app esté abierta en el teléfono.' });
+  }
+
+  const deviceObj = activeDevices.get(deviceId);
+  
+  // Validar API Key
+  if (deviceObj.apiKey && deviceObj.apiKey !== clientApiKey) {
+    console.log(`[!] Intento de acceso no autorizado al dispositivo ${deviceId}. Clave proporcionada: ${clientApiKey}`);
+    return res.status(401).json({ error: 'No autorizado. API Key incorrecta o no proporcionada.' });
   }
 
   if (!sql) {
     return res.status(400).json({ error: 'Se requiere el parámetro "sql" en el body.' });
   }
 
-  const socket = activeDevices.get(deviceId);
+  const socket = deviceObj.socket;
   const queryId = crypto.randomUUID();
 
   console.log(`[>] Enviando query ${queryId} al dispositivo ${deviceId}: ${sql}`);
