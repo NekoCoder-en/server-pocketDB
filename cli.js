@@ -43,12 +43,6 @@ rl.on('line', async (line) => {
   // --- CAPA DE TRADUCCIÓN (MySQL -> SQLite) ---
   const upperSql = sql.toUpperCase().replace(';', '').trim();
   
-  if (upperSql === 'SHOW DATABASES') {
-    console.table([{ Database: 'pocketdb_main (SQLite)' }]);
-    rl.prompt();
-    return;
-  }
-  
   if (upperSql === 'SHOW TABLES') {
     sql = "SELECT name AS 'Table' FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';";
   } else if (upperSql.startsWith('DESCRIBE ')) {
