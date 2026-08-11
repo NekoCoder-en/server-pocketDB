@@ -165,9 +165,25 @@ app.get('/', (req, res) => {
           <div class="pulse-dot"></div>
           <span class="status-text">Relay Activo</span>
         </div>
+
+        <div style="margin-top: 3rem; text-align: left; background: rgba(0,0,0,0.3); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+          <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--accent);">📖 Documentación de la API</h2>
+          <p style="font-size: 0.95rem; margin-bottom: 1rem;">Para ejecutar consultas SQL desde tu código, realiza una petición HTTP POST a este servidor.</p>
+          
+          <code style="display: block; background: #000; padding: 1rem; border-radius: 8px; font-family: monospace; color: #00E676; margin-bottom: 1rem;">POST /api/query/:deviceId</code>
+          
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem; color: #E2E8F0;">Ejemplo (JavaScript):</h3>
+          <pre style="background: #000; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem; color: #8A99B5; overflow-x: auto;">
+const response = await fetch('https://pocketdb-otnm.onrender.com/api/query/TU_ID', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ sql: "SELECT * FROM usuarios;" })
+});
+const result = await response.json();</pre>
+        </div>
       </div>
 
-      <div class="footer">Edge Database Node &bull; Open Source</div>
+      <div class="footer" style="position: relative; margin-top: 3rem; margin-bottom: 2rem;">Edge Database Node &bull; Open Source</div>
     </body>
     </html>
   `);
