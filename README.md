@@ -9,19 +9,20 @@
 <br />
 
 ## 🌐 ¿Qué es PocketDB Relay?
-Este es el servidor intermediario para el ecosistema PocketDB. Su función principal es recibir peticiones HTTP estándar (REST) desde cualquier aplicación o script de backend, traducirlas a eventos **WebSocket**, y enrutarlas directamente hacia el teléfono del desarrollador donde reside físicamente la base de datos SQLite.
+Este es el servidor intermediario para el ecosistema PocketDB. Su función principal es recibir peticiones HTTP estándar (REST) desde cualquier aplicación y enrutarlas directamente hacia el teléfono del desarrollador vía **WebSockets**. Resuelve el problema de red (NAT Traversal), permitiendo que tu teléfono actúe como una base de datos pública.
 
-Resuelve el problema del "NAT Traversal", permitiendo que tu teléfono actúe como una DB pública sin necesidad de configurar firewalls o usar Ngrok.
+## 🌟 La Filosofía Open Source de PocketDB
 
-## ⚙️ ¿Cómo Funciona?
-1. La App Móvil de PocketDB se conecta a este servidor por WebSockets y se registra con un `Device ID` único.
-2. Tu backend o ORM envía un `POST` a `/api/query/:deviceId` con una sentencia SQL.
-3. El Relay Server localiza al teléfono, envía el comando, espera que SQLite lo procese en el móvil, y te devuelve la respuesta.
+Este proyecto consta de un servidor central y una aplicación móvil. Está diseñado para ofrecer dos alternativas:
 
-## 🚀 Despliegue (Recomendado: Fly.io o Render)
-Este servidor necesita mantener conexiones WebSocket abiertas de larga duración. No se recomienda usar Vercel (Serverless).
+1. **Servidor Público Oficial:** Mantenemos una instancia de este servidor siempre encendida en la nube (ej. Fly.io). Los usuarios que descarguen el APK de la aplicación móvil se conectarán aquí por defecto para una experiencia de "cero configuración".
+2. **Tu Propio Servidor (Self-Hosted):** Si eres una empresa o un desarrollador que requiere privacidad absoluta y control total, puedes clonar este repositorio y levantar este servidor en tu propia infraestructura. Luego, solo introduces tu URL en la app móvil.
 
-**Despliegue rápido en Fly.io:**
+## 🚀 Despliegue de tu propio Servidor
+
+Este servidor requiere conexiones WebSocket de larga duración (evita Serverless como Vercel). Recomendamos **Fly.io**, **Render** o **Railway**.
+
+**Ejemplo con Fly.io:**
 ```bash
 fly launch
 fly deploy
@@ -37,7 +38,9 @@ npm start
 ```
 El servidor escuchará por defecto en el puerto `3001`.
 
-## 📖 Referencia de la API
+## 📖 Referencia de la API (Uso del Cliente)
+
+Una vez que el teléfono esté conectado, puedes enviarle consultas SQL mediante HTTP.
 
 ### Ejecutar un Query
 `POST /api/query/:deviceId`
@@ -54,10 +57,6 @@ El servidor escuchará por defecto en el puerto `3001`.
 ```json
 {
   "success": true,
-  "data": [
-     // Resultados de tu tabla o filas afectadas
-  ]
+  "data": []
 }
 ```
----
-*Hecho con ❤️ para desarrolladores que buscan herramientas ágiles.*
