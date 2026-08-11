@@ -59,7 +59,11 @@ pocketdb> SELECT * FROM usuarios;            -- Consultas normales
 
 Si estás construyendo una aplicación real (ej. un backend en NestJS o un frontend en React) y quieres guardar los datos en tu celular, usa nuestra API HTTP.
 
-**Endpoint:** `POST /api/query/:deviceId`
+> [!TIP]
+> **📖 Documentación Completa de la API**
+> Para ver todos los detalles técnicos, headers, métodos de autenticación (`x-api-key`) y ejemplos completos, **simplemente visita la URL raíz de tu servidor Relay en el navegador** (ej. `https://tu-servidor.onrender.com/`). Ahí encontrarás un sitio de documentación integrado.
+
+**Endpoint Principal:** `POST /api/query/:deviceId`
 
 ### Ejemplo usando `fetch` (JavaScript / TypeScript)
 
