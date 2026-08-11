@@ -1,62 +1,117 @@
 <div align="center">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/d/d9/Node.js_logo.svg" width="120" alt="Node.js Logo"/>
   <h1>☁️ PocketDB Relay Server</h1>
-  <p><strong>El puente en la nube que conecta tus apps con tu base de datos móvil.</strong></p>
-  <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" />
-  <img src="https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white" />
-  <img src="https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white" />
+  <p><strong>El puente inteligente entre tus aplicaciones y tus bases de datos móviles.</strong></p>
+  
+  <p>
+    <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" />
+    <img src="https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white" />
+    <img src="https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white" />
+  </p>
 </div>
 
 <br />
 
-## 🌐 ¿Qué es PocketDB Relay?
-Este es el servidor intermediario para el ecosistema PocketDB. Su función principal es recibir peticiones HTTP estándar (REST) desde cualquier aplicación y enrutarlas directamente hacia el teléfono del desarrollador vía **WebSockets**. Resuelve el problema de red (NAT Traversal), permitiendo que tu teléfono actúe como una base de datos pública.
+## 🌐 Arquitectura del Ecosistema
 
-## 🌟 La Filosofía Open Source de PocketDB
+PocketDB Relay Server es la pieza central que hace posible la magia. Dado que los teléfonos móviles no pueden exponer puertos estáticos a internet debido a las reglas de los proveedores de red (NAT), este servidor actúa como un **Túnel Inverso (Reverse Proxy)**.
 
-Este proyecto consta de un servidor central y una aplicación móvil. Está diseñado para ofrecer dos alternativas:
+1. Tu [Aplicación Móvil](https://github.com/NekoCoder-en/PocketDB) abre una conexión persistente (WebSocket) hacia este servidor.
+2. Este servidor expone una API REST moderna (`/api/query`) y un CLI Interactivo.
+3. Cuando envías una consulta SQL al servidor, este la enruta instantáneamente a través del socket hacia el teléfono, espera que SQLite la procese, y te devuelve los resultados en formato JSON.
 
-1. **Servidor Público Oficial:** Mantenemos una instancia de este servidor siempre encendida en la nube (ej. Fly.io). Los usuarios que descarguen el APK de la aplicación móvil se conectarán aquí por defecto para una experiencia de "cero configuración".
-2. **Tu Propio Servidor (Self-Hosted):** Si eres una empresa o un desarrollador que requiere privacidad absoluta y control total, puedes clonar este repositorio y levantar este servidor en tu propia infraestructura. Luego, solo introduces tu URL en la app móvil.
+## 🚀 Despliegue en Producción (Cloud)
 
-## 🚀 Despliegue de tu propio Servidor
+Este servidor mantiene conexiones persistentes en memoria (WebSockets). Por lo tanto, **NO** es compatible con plataformas Serverless (como Vercel o AWS Lambda). 
+Debe ser alojado en entornos que soporten procesos Node.js continuos. Recomendamos **Render.com**, **Railway** o **Fly.io**.
 
-Este servidor requiere conexiones WebSocket de larga duración (evita Serverless como Vercel). Recomendamos **Fly.io**, **Render** o **Railway**.
+**Para desplegar en Render:**
+Simplemente vincula tu repositorio de GitHub a un "Web Service" en Render. El `package.json` ya está configurado con los scripts `"start"` y `"dev"` requeridos por Render para iniciar automáticamente usando `node index.js`.
 
-**Ejemplo con Fly.io:**
+---
+
+## 💻 PocketDB CLI (Consola Interactiva)
+
+Hemos incluido una herramienta de línea de comandos (CLI) que simula la experiencia de estar conectado a un servidor MariaDB o MySQL tradicional. Traduce inteligentemente comandos comunes hacia SQLite y te permite administrar tus bases de datos desde tu PC.
+
+**Uso:**
+Abre tu terminal y ejecuta el script pasando el ID que aparece en la pantalla de tu app móvil, junto con la URL de tu Relay Server:
+
 ```bash
-fly launch
-fly deploy
+# Ejemplo:
+node cli.js 3C9DT6 https://pocketdb-relay.onrender.com
 ```
 
-## 🛠️ Instalación Local
-
-```bash
-git clone https://github.com/NekoCoder-en/server-pocketDB.git
-cd server-pocketDB
-npm install
-npm start
+**Comandos soportados en la Consola:**
+```sql
+pocketdb> SHOW DATABASES;                    -- Lista los archivos .db en tu teléfono
+pocketdb> CREATE DATABASE ecommerce;         -- Crea una nueva base de datos aislada
+pocketdb> USE ecommerce;                     -- Cambia el contexto a la nueva BD
+pocketdb> CREATE TABLE usuarios (id INT);    -- Crea tablas en la BD activa
+pocketdb> SHOW TABLES;                       -- Lista las tablas
+pocketdb> DESCRIBE usuarios;                 -- Muestra la estructura de la tabla
+pocketdb> SELECT * FROM usuarios;            -- Consultas normales
 ```
-El servidor escuchará por defecto en el puerto `3001`.
 
-## 📖 Referencia de la API (Uso del Cliente)
+---
 
-Una vez que el teléfono esté conectado, puedes enviarle consultas SQL mediante HTTP.
+## 🔌 API REST (Integración con tu Backend/Frontend)
 
-### Ejecutar un Query
-`POST /api/query/:deviceId`
+Si estás construyendo una aplicación real (ej. un backend en NestJS o un frontend en React) y quieres guardar los datos en tu celular, usa nuestra API HTTP.
 
-**Body:**
-```json
-{
-  "sql": "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT);",
-  "args": []
+**Endpoint:** `POST /api/query/:deviceId`
+
+### Ejemplo usando `fetch` (JavaScript / TypeScript)
+
+```javascript
+async function guardarUsuario() {
+  const DEVICE_ID = '3C9DT6';
+  const RELAY_URL = 'https://pocketdb-relay.onrender.com';
+
+  // 1. Primero seleccionamos la base de datos que queremos usar
+  await fetch(`${RELAY_URL}/api/query/${DEVICE_ID}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sql: 'USE ecommerce;' })
+  });
+
+  // 2. Ejecutamos nuestra consulta real
+  const response = await fetch(`${RELAY_URL}/api/query/${DEVICE_ID}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      sql: "INSERT INTO usuarios (nombre, edad) VALUES ('Ana', 28);" 
+    })
+  });
+
+  const json = await response.json();
+  if (json.success) {
+    console.log('Fila insertada. ID generado:', json.data.lastInsertRowId);
+  }
 }
 ```
 
-**Respuesta Exitosa:**
+### Respuesta de Éxito (`SELECT`)
 ```json
 {
   "success": true,
-  "data": []
+  "data": [
+    { "id": 1, "nombre": "Ana", "edad": 28 }
+  ]
 }
 ```
+
+### Respuesta de Éxito (`INSERT` / `UPDATE`)
+```json
+{
+  "success": true,
+  "data": {
+    "lastInsertRowId": 1,
+    "changes": 1
+  }
+}
+```
+
+<div align="center">
+  <p><i>Desarrollado para la próxima generación de arquitecturas distribuidas.</i></p>
+</div>
