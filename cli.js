@@ -28,7 +28,7 @@ console.log(`Escribe tus consultas SQL (ej. SELECT * FROM users;). Escribe 'exit
 rl.prompt();
 
 rl.on('line', async (line) => {
-  const sql = line.trim();
+  let sql = line.trim();
   
   if (sql.toLowerCase() === 'exit' || sql.toLowerCase() === '.quit') {
     console.log("¡Adiós!");
@@ -39,6 +39,23 @@ rl.on('line', async (line) => {
     rl.prompt();
     return;
   }
+
+  // --- CAPA DE TRADUCCIÓN (MySQL -> SQLite) ---
+  const upperSql = sql.toUpperCase().replace(';', '').trim();
+  
+  if (upperSql === 'SHOW DATABASES') {
+    console.table([{ Database: 'pocketdb_main (SQLite)' }]);
+    rl.prompt();
+    return;
+  }
+  
+  if (upperSql === 'SHOW TABLES') {
+    sql = "SELECT name AS 'Table' FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';";
+  } else if (upperSql.startsWith('DESCRIBE ')) {
+    const tableName = sql.split(' ')[1].replace(';', '');
+    sql = `PRAGMA table_info(${tableName});`;
+  }
+  // --------------------------------------------
 
   try {
     const response = await fetch(`${cleanUrl}/api/query/${DEVICE_ID}`, {
