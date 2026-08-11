@@ -1,4 +1,6 @@
 <div align="center">
+  <img src="./banner.png" alt="PocketDB Relay Server Banner" width="100%" />
+  <br /><br />
   <img src="https://upload.wikimedia.org/wikipedia/commons/d/d9/Node.js_logo.svg" width="120" alt="Node.js Logo"/>
   <h1>☁️ PocketDB Relay Server</h1>
   <p><strong>El puente inteligente entre tus aplicaciones y tus bases de datos móviles.</strong></p>
