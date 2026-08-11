@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Landing Page Bonita
+// Landing Page Bonita Premium
 app.get('/', (req, res) => {
   res.send(`
     <!DOCTYPE html>
@@ -17,20 +17,157 @@ app.get('/', (req, res) => {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>PocketDB Relay Server</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
       <style>
-        body { margin: 0; padding: 0; background-color: #0B0F19; color: #FFFFFF; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center; }
-        h1 { font-size: 3rem; margin-bottom: 0.5rem; letter-spacing: 2px; }
-        .accent { color: #00F2FE; }
-        p { color: #8A99B5; font-size: 1.2rem; max-width: 600px; line-height: 1.6; }
-        .status { margin-top: 2rem; padding: 10px 20px; background: rgba(0, 242, 254, 0.1); border: 1px solid #00F2FE; border-radius: 20px; color: #00F2FE; font-weight: bold; }
-        .footer { position: absolute; bottom: 20px; color: #5C6B89; font-size: 0.9rem; }
+        :root {
+          --bg-color: #050505;
+          --accent: #00F2FE;
+          --accent-secondary: #4FACFE;
+          --text-main: #FFFFFF;
+          --text-muted: #8A99B5;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+          background-color: var(--bg-color);
+          color: var(--text-main);
+          font-family: 'Outfit', sans-serif;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          position: relative;
+        }
+
+        /* Animated Background Blobs */
+        .blob {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(80px);
+          z-index: 0;
+          animation: float 10s infinite ease-in-out alternate;
+        }
+        .blob-1 { width: 400px; height: 400px; background: rgba(0, 242, 254, 0.15); top: -100px; left: -100px; }
+        .blob-2 { width: 500px; height: 500px; background: rgba(79, 172, 254, 0.1); bottom: -150px; right: -100px; animation-delay: -5s; }
+
+        @keyframes float {
+          0% { transform: translate(0, 0) scale(1); }
+          100% { transform: translate(30px, 50px) scale(1.1); }
+        }
+
+        /* Glassmorphism Card */
+        .glass-card {
+          position: relative;
+          z-index: 10;
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          border-radius: 24px;
+          padding: 4rem 3rem;
+          max-width: 600px;
+          width: 90%;
+          text-align: center;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+          transform: translateY(20px);
+          opacity: 0;
+          animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideUp { to { transform: translateY(0); opacity: 1; } }
+
+        h1 {
+          font-size: 4rem;
+          font-weight: 900;
+          letter-spacing: -1px;
+          margin-bottom: 1rem;
+          background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        p {
+          color: var(--text-muted);
+          font-size: 1.15rem;
+          line-height: 1.6;
+          margin-bottom: 3rem;
+          font-weight: 300;
+        }
+
+        /* Status Indicator */
+        .status-container {
+          display: inline-flex;
+          align-items: center;
+          gap: 12px;
+          background: rgba(0, 242, 254, 0.05);
+          border: 1px solid rgba(0, 242, 254, 0.2);
+          padding: 14px 28px;
+          border-radius: 100px;
+          transition: all 0.3s ease;
+          cursor: default;
+        }
+        
+        .status-container:hover {
+          background: rgba(0, 242, 254, 0.1);
+          border-color: rgba(0, 242, 254, 0.4);
+          transform: translateY(-2px);
+          box-shadow: 0 10px 20px rgba(0, 242, 254, 0.1);
+        }
+
+        .pulse-dot {
+          width: 10px;
+          height: 10px;
+          background-color: #00E676;
+          border-radius: 50%;
+          box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7);
+          animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+          0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
+          70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 230, 118, 0); }
+          100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
+        }
+
+        .status-text {
+          color: #00E676;
+          font-weight: 700;
+          font-size: 0.95rem;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+        }
+
+        .footer {
+          position: absolute;
+          bottom: 30px;
+          color: rgba(255, 255, 255, 0.2);
+          font-size: 0.85rem;
+          letter-spacing: 2px;
+          text-transform: uppercase;
+          z-index: 10;
+        }
       </style>
     </head>
     <body>
-      <h1>Pocket<span class="accent">DB</span> Relay</h1>
-      <p>El servidor está corriendo perfectamente. Conecta tu App Móvil a esta URL para empezar a recibir consultas SQL desde la nube.</p>
-      <div class="status">🟢 Sistema en línea y esperando conexiones</div>
-      <div class="footer">Cloud Database Edge Node &bull; Open Source</div>
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      
+      <div class="glass-card">
+        <h1>PocketDB</h1>
+        <p>El puente inteligente está en línea. Este servidor enruta las peticiones de forma segura hacia la base de datos física de tu teléfono móvil en tiempo real.</p>
+        
+        <div class="status-container">
+          <div class="pulse-dot"></div>
+          <span class="status-text">Relay Activo</span>
+        </div>
+      </div>
+
+      <div class="footer">Edge Database Node &bull; Open Source</div>
     </body>
     </html>
   `);
